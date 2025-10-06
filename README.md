@@ -1,18 +1,8 @@
-# Welcome to your Lovable project
+# Welcome to wheather predction project
 
-## Project info
 
-**URL**: https://lovable.dev/projects/6ee0ad86-1b9e-4f0b-b8fc-af356567de5f
 
-## How can I edit this code?
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/6ee0ad86-1b9e-4f0b-b8fc-af356567de5f) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
 
 **Use your preferred IDE**
 
