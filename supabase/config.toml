@@ -1,0 +1,4 @@
+project_id = "kdixibnqkpvfpcwdclre"
+
+[functions.seed-weather-data]
+verify_jwt = false
