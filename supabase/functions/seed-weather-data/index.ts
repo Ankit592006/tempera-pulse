@@ -16,21 +16,33 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Create weather stations
-    const stations = [
-      { name: "Downtown Station", location: "City Center", latitude: 40.7128, longitude: -74.0060 },
-      { name: "Airport Station", location: "International Airport", latitude: 40.6413, longitude: -73.7781 },
-      { name: "Coastal Station", location: "Seaside", latitude: 40.5795, longitude: -73.9680 },
-      { name: "Mountain Station", location: "Highland Peak", latitude: 40.9176, longitude: -74.1718 },
-      { name: "Valley Station", location: "Green Valley", latitude: 40.8448, longitude: -73.8648 }
-    ];
-
-    const { data: stationsData, error: stationsError } = await supabase
+    // Check if stations already exist
+    const { data: existingStations } = await supabase
       .from('weather_stations')
-      .upsert(stations, { onConflict: 'name' })
-      .select();
+      .select('*');
 
-    if (stationsError) throw stationsError;
+    let stationsData;
+    
+    if (!existingStations || existingStations.length === 0) {
+      // Create weather stations
+      const stations = [
+        { name: "Downtown Station", location: "City Center", latitude: 40.7128, longitude: -74.0060 },
+        { name: "Airport Station", location: "International Airport", latitude: 40.6413, longitude: -73.7781 },
+        { name: "Coastal Station", location: "Seaside", latitude: 40.5795, longitude: -73.9680 },
+        { name: "Mountain Station", location: "Highland Peak", latitude: 40.9176, longitude: -74.1718 },
+        { name: "Valley Station", location: "Green Valley", latitude: 40.8448, longitude: -73.8648 }
+      ];
+
+      const { data, error: stationsError } = await supabase
+        .from('weather_stations')
+        .insert(stations)
+        .select();
+
+      if (stationsError) throw stationsError;
+      stationsData = data;
+    } else {
+      stationsData = existingStations;
+    }
 
     // Generate historical weather data (last 7 days)
     const weatherData = [];
