@@ -50,7 +50,7 @@ serve(async (req) => {
     const alerts = [];
     
     for (const station of stationsData) {
-      const baseTemp = 15 + Math.random() * 15; // 15-30°C base
+      const baseTemp = 20 + Math.random() * 15; // 15-30°C base
       
       // Historical data (last 7 days, hourly)
       for (let day = 7; day >= 0; day--) {
