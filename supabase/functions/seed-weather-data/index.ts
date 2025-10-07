@@ -26,7 +26,7 @@ serve(async (req) => {
     if (!existingStations || existingStations.length === 0) {
       // Create weather stations
       const stations = [
-        { name: "ankit", location: "City Center", latitude: 40.7128, longitude: -74.0060 },
+        { name: "Downtown Station", location: "City Center", latitude: 40.7128, longitude: -74.0060 },
         { name: "Airport Station", location: "International Airport", latitude: 40.6413, longitude: -73.7781 },
         { name: "Coastal Station", location: "Seaside", latitude: 40.5795, longitude: -73.9680 },
         { name: "Mountain Station", location: "Highland Peak", latitude: 40.9176, longitude: -74.1718 },
