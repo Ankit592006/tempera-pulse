@@ -16,33 +16,27 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Check if stations already exist
-    const { data: existingStations } = await supabase
+    // Delete existing data to start fresh with Indian cities
+    await supabase.from('weather_alerts').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabase.from('weather_predictions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabase.from('weather_data').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabase.from('weather_stations').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+    // Create Indian weather stations
+    const stations = [
+      { name: "Mumbai", location: "Maharashtra, Western India", latitude: 19.0760, longitude: 72.8777 },
+      { name: "Pune", location: "Maharashtra, Western India", latitude: 18.5204, longitude: 73.8567 },
+      { name: "Alandi", location: "Maharashtra, Western India", latitude: 18.6776, longitude: 73.8987 },
+      { name: "Sangamner", location: "Maharashtra, Central India", latitude: 19.5673, longitude: 74.2058 },
+      { name: "Nagpur", location: "Maharashtra, Central India", latitude: 21.1458, longitude: 79.0882 }
+    ];
+
+    const { data: stationsData, error: stationsError } = await supabase
       .from('weather_stations')
-      .select('*');
+      .insert(stations)
+      .select();
 
-    let stationsData;
-    
-    if (!existingStations || existingStations.length === 0) {
-      // Create weather stations
-      const stations = [
-        { name: "Mumbai", location: "Maharashtra, Western India", latitude: 19.0760, longitude: 72.8777 },
-        { name: "Pune", location: "Maharashtra, Western India", latitude: 18.5204, longitude: 73.8567 },
-        { name: "Alandi", location: "Maharashtra, Western India", latitude: 18.6776, longitude: 73.8987 },
-        { name: "Sangamner", location: "Maharashtra, Central India", latitude: 19.5673, longitude: 74.2058 },
-        { name: "Nagpur", location: "Maharashtra, Central India", latitude: 21.1458, longitude: 79.0882 }
-      ];
-
-      const { data, error: stationsError } = await supabase
-        .from('weather_stations')
-        .insert(stations)
-        .select();
-
-      if (stationsError) throw stationsError;
-      stationsData = data;
-    } else {
-      stationsData = existingStations;
-    }
+    if (stationsError) throw stationsError;
 
     // Generate historical weather data (last 7 days)
     const weatherData = [];
