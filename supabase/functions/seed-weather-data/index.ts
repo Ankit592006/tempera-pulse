@@ -50,25 +50,55 @@ serve(async (req) => {
     const predictions = [];
     const alerts = [];
     
+    // Realistic climate profiles for Indian cities
+    const climateProfiles: Record<string, { 
+      baseTemp: number, 
+      tempRange: number, 
+      humidity: { min: number, max: number },
+      rainProbability: number,
+      windSpeed: { min: number, max: number }
+    }> = {
+      "Mumbai": { baseTemp: 30, tempRange: 5, humidity: { min: 65, max: 85 }, rainProbability: 0.25, windSpeed: { min: 10, max: 35 } },
+      "Pune": { baseTemp: 28, tempRange: 7, humidity: { min: 45, max: 70 }, rainProbability: 0.15, windSpeed: { min: 8, max: 25 } },
+      "Alandi": { baseTemp: 27, tempRange: 6, humidity: { min: 50, max: 75 }, rainProbability: 0.18, windSpeed: { min: 7, max: 22 } },
+      "Sangamner": { baseTemp: 29, tempRange: 8, humidity: { min: 40, max: 65 }, rainProbability: 0.20, windSpeed: { min: 12, max: 30 } },
+      "Nagpur": { baseTemp: 32, tempRange: 9, humidity: { min: 35, max: 60 }, rainProbability: 0.12, windSpeed: { min: 5, max: 20 } }
+    };
+    
     for (const station of stationsData) {
-      const baseTemp = 20 + Math.random() * 15; // 15-30°C base
+      const profile = climateProfiles[station.name] || climateProfiles["Pune"];
       
       // Historical data (last 7 days, hourly)
       for (let day = 7; day >= 0; day--) {
         for (let hour = 0; hour < 24; hour++) {
           const timestamp = new Date(Date.now() - (day * 24 + (23 - hour)) * 3600000);
-          const temp = baseTemp + Math.sin(hour / 24 * Math.PI * 2) * 5 + (Math.random() - 0.5) * 3;
-          const humidity = 40 + Math.random() * 40;
-          const precipitation = Math.random() < 0.15 ? Math.random() * 10 : 0;
+          
+          // Realistic temperature variation: cooler at night (2-6 AM), hotter in afternoon (1-4 PM)
+          const hourFactor = Math.sin((hour - 6) / 24 * Math.PI * 2);
+          const temp = profile.baseTemp + (hourFactor * profile.tempRange) + (Math.random() - 0.5) * 2;
+          
+          // Humidity inversely correlated with temperature
+          const humidityBase = profile.humidity.min + (profile.humidity.max - profile.humidity.min) * (1 - (hourFactor + 1) / 2);
+          const humidity = humidityBase + (Math.random() - 0.5) * 10;
+          
+          // Realistic precipitation patterns
+          const precipitation = Math.random() < profile.rainProbability ? (Math.random() * 15 + 2) : 0;
+          
+          // Wind speed varies with time of day
+          const windBase = profile.windSpeed.min + (profile.windSpeed.max - profile.windSpeed.min) * Math.random();
+          const windSpeed = Math.max(windBase + (Math.random() - 0.5) * 5, 0);
+          
+          // Atmospheric pressure (typical range for India)
+          const pressure = 1010 + Math.sin(day / 7 * Math.PI) * 8 + (Math.random() - 0.5) * 5;
           
           weatherData.push({
             station_id: station.id,
             timestamp: timestamp.toISOString(),
             temperature: Number(temp.toFixed(2)),
-            humidity: Number(humidity.toFixed(2)),
+            humidity: Number(Math.max(20, Math.min(95, humidity)).toFixed(2)),
             precipitation: Number(precipitation.toFixed(2)),
-            wind_speed: Number((Math.random() * 30).toFixed(2)),
-            pressure: Number((1000 + Math.random() * 30).toFixed(2))
+            wind_speed: Number(windSpeed.toFixed(2)),
+            pressure: Number(pressure.toFixed(2))
           });
         }
       }
@@ -77,42 +107,74 @@ serve(async (req) => {
       for (let day = 0; day < 5; day++) {
         for (let hour = 0; hour < 24; hour += 6) {
           const predDate = new Date(Date.now() + (day * 24 + hour) * 3600000);
-          const trend = (Math.random() - 0.5) * 2;
-          const predictedTemp = baseTemp + trend + Math.sin((hour / 24) * Math.PI * 2) * 5;
+          
+          // Slight warming trend over prediction period
+          const trendFactor = day * 0.5;
+          const hourFactor = Math.sin((hour - 6) / 24 * Math.PI * 2);
+          const predictedTemp = profile.baseTemp + (hourFactor * profile.tempRange) + trendFactor;
+          
+          const humidityBase = profile.humidity.min + (profile.humidity.max - profile.humidity.min) * (1 - (hourFactor + 1) / 2);
+          const predictedHumidity = humidityBase + (Math.random() - 0.5) * 8;
+          
+          const predictedPrecipitation = Math.random() < profile.rainProbability * 0.8 ? (Math.random() * 8 + 1) : 0;
+          
+          // Confidence decreases over time
+          const confidence = 95 - (day * 3) + (Math.random() - 0.5) * 4;
           
           predictions.push({
             station_id: station.id,
             prediction_date: predDate.toISOString(),
             predicted_temp: Number(predictedTemp.toFixed(2)),
-            predicted_humidity: Number((45 + Math.random() * 30).toFixed(2)),
-            predicted_precipitation: Number((Math.random() * 5).toFixed(2)),
-            confidence: Number((82 + Math.random() * 15).toFixed(2))
+            predicted_humidity: Number(Math.max(20, Math.min(95, predictedHumidity)).toFixed(2)),
+            predicted_precipitation: Number(predictedPrecipitation.toFixed(2)),
+            confidence: Number(Math.max(75, Math.min(98, confidence)).toFixed(2))
           });
         }
       }
 
-      // Generate alerts based on extreme conditions
-      const extremeTemp = baseTemp > 28 || baseTemp < 5;
-      const highWind = Math.random() > 0.7;
+      // Generate realistic alerts based on Indian weather patterns
+      const avgTemp = profile.baseTemp;
+      const isHeatWave = avgTemp > 38;
+      const isHeavyRain = profile.rainProbability > 0.22;
+      const isHighWind = profile.windSpeed.max > 30;
       
-      if (extremeTemp) {
+      if (isHeatWave) {
         alerts.push({
           station_id: station.id,
-          alert_type: baseTemp > 28 ? "Heat Warning" : "Cold Warning",
-          severity: baseTemp > 32 || baseTemp < 0 ? "extreme" : "high",
-          message: baseTemp > 28 
-            ? `High temperature warning: ${baseTemp.toFixed(1)}°C expected` 
-            : `Low temperature warning: ${baseTemp.toFixed(1)}°C expected`,
+          alert_type: "Heat Wave Warning",
+          severity: avgTemp > 42 ? "extreme" : "high",
+          message: `Heat wave conditions expected. Temperature may reach ${(avgTemp + 3).toFixed(1)}°C. Stay hydrated and avoid direct sunlight.`,
           is_active: true
         });
       }
 
-      if (highWind) {
+      if (isHeavyRain) {
         alerts.push({
           station_id: station.id,
-          alert_type: "Wind Advisory",
+          alert_type: "Heavy Rainfall Alert",
           severity: "medium",
-          message: "Strong winds expected, up to 45 km/h",
+          message: `Heavy rainfall expected. Possibility of waterlogging in low-lying areas. Take necessary precautions.`,
+          is_active: true
+        });
+      }
+
+      if (isHighWind) {
+        alerts.push({
+          station_id: station.id,
+          alert_type: "Strong Wind Advisory",
+          severity: "medium",
+          message: `Strong winds expected with speeds up to ${profile.windSpeed.max} km/h. Secure loose objects.`,
+          is_active: true
+        });
+      }
+
+      // Monsoon-related alerts for high humidity cities
+      if (profile.humidity.max > 75 && Math.random() > 0.5) {
+        alerts.push({
+          station_id: station.id,
+          alert_type: "High Humidity Alert",
+          severity: "low",
+          message: `High humidity levels expected (${profile.humidity.max}%). Uncomfortable weather conditions likely.`,
           is_active: true
         });
       }
