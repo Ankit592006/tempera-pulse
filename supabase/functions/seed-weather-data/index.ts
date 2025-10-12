@@ -26,12 +26,11 @@ serve(async (req) => {
     if (!existingStations || existingStations.length === 0) {
       // Create weather stations
       const stations = [
-       { name: "Mumbai", location: "Coastal City", latitude: 19.0760, longitude: 72.8777 },
-{ name: "Pune", location: "Deccan Plateau", latitude: 18.5204, longitude: 73.8567 },
-{ name: "Alandi", location: "Riverside Town", latitude: 18.6776, longitude: 73.8987 },
-{ name: "Sangamner", location: "Hilly Region", latitude: 19.5673, longitude: 74.2058 },
-{ name: "Nagpur", location: "Central Plains", latitude: 21.1458, longitude: 79.0882 }
-
+        { name: "Mumbai", location: "Maharashtra, Western India", latitude: 19.0760, longitude: 72.8777 },
+        { name: "Pune", location: "Maharashtra, Western India", latitude: 18.5204, longitude: 73.8567 },
+        { name: "Alandi", location: "Maharashtra, Western India", latitude: 18.6776, longitude: 73.8987 },
+        { name: "Sangamner", location: "Maharashtra, Central India", latitude: 19.5673, longitude: 74.2058 },
+        { name: "Nagpur", location: "Maharashtra, Central India", latitude: 21.1458, longitude: 79.0882 }
       ];
 
       const { data, error: stationsError } = await supabase
