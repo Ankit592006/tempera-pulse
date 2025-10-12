@@ -176,7 +176,7 @@ const WeatherDashboard = () => {
             >
               {stations.map((station) => (
                 <option key={station.id} value={station.id}>
-                  {station.name} - {station.location}
+                  {station.name}
                 </option>
               ))}
             </select>
